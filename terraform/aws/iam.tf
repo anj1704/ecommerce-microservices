@@ -20,13 +20,11 @@ resource "aws_iam_role" "lambda_execution" {
   }
 }
 
-# Attach basic Lambda execution policy
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Lambda policy for S3, RDS, DynamoDB access
 resource "aws_iam_role_policy" "lambda_permissions" {
   name = "${var.project_name}-lambda-permissions"
   role = aws_iam_role.lambda_execution.id
@@ -41,8 +39,8 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "s3:PutObject"
         ]
         Resource = [
-          "${aws_s3_bucket.item_images.arn}/*",
-          "${aws_s3_bucket.ingestion_trigger.arn}/*"
+          "arn:aws:s3:::${module.databases.s3_item_images_bucket}/*",
+          "arn:aws:s3:::${module.databases.s3_ingestion_bucket}/*"
         ]
       },
       {
@@ -52,12 +50,10 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "dynamodb:GetItem"
         ]
         Resource = [
-          aws_dynamodb_table.shopping_carts.arn,
-          aws_dynamodb_table.user_sessions.arn
+          "arn:aws:dynamodb:${var.aws_region}:*:table/${module.databases.dynamodb_carts_table}",
+          "arn:aws:dynamodb:${var.aws_region}:*:table/${module.databases.dynamodb_sessions_table}"
         ]
       }
     ]
   })
 }
-
-# EKS cluster role (we'll add this when setting up EKS)

@@ -2,6 +2,8 @@
 resource "aws_s3_bucket" "item_images" {
   bucket = "${var.project_name}-item-images-${var.environment}"
 
+  force_destroy = true
+
   tags = {
     Name = "Item Images"
   }
@@ -27,6 +29,8 @@ resource "aws_s3_bucket_public_access_block" "item_images" {
 # Ingestion Trigger Bucket
 resource "aws_s3_bucket" "ingestion_trigger" {
   bucket = "${var.project_name}-ingestion-trigger-${var.environment}"
+
+  force_destroy = true
 
   tags = {
     Name = "Ingestion Trigger"

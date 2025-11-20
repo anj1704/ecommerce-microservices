@@ -9,6 +9,14 @@ output "subnet_ids" {
   value       = local.subnet_ids
 }
 
+output "public_subnet_id" {
+  value = local.public_subnet_id
+}
+
+output "private_subnet_id" {
+  value = local.private_subnet_id
+}
+
 # Database outputs (from module)
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint"
@@ -39,4 +47,29 @@ output "dynamodb_carts_table" {
 output "dynamodb_sessions_table" {
   description = "DynamoDB user sessions table"
   value       = module.databases.dynamodb_sessions_table
+}
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.lambda_ingestion.repository_url
+}
+
+output "lambda_function_name" {
+  value = aws_lambda_function.ingestion.function_name
+}
+
+output "ingestion_bucket" {
+  value = module.databases.s3_ingestion_bucket
+}
+
+output "eks_cluster_name" {
+  value = aws_eks_cluster.main.name
+}
+
+output "eks_cluster_endpoint" {
+  value = aws_eks_cluster.main.endpoint
+}
+
+output "eks_cluster_certificate" {
+  value     = aws_eks_cluster.main.certificate_authority[0].data
+  sensitive = true
 }

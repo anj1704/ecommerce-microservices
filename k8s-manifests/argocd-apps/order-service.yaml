@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: order-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/anj1704/ecommerce-microservices.git
+    targetRevision: main
+    path: k8s-manifests/applications/order-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

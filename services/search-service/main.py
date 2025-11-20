@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 from psycopg2.extras import RealDictCursor
 
 from config import settings
-from database import get_db_connection, init_db
+from database import get_db_connection
 
 app = FastAPI(title="Search Service", version="1.0.0")
 
@@ -23,7 +23,7 @@ model = None
 @app.on_event("startup")
 async def startup():
     global model
-    init_db()
+    # init_db()
     print("Loading BERT model...")
     model = SentenceTransformer(settings.model_name)
     print("Model loaded!")

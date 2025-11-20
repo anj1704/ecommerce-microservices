@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import jwt
+import os
 from typing import Optional
 
 app = FastAPI(title="API Gateway", version="1.0.0")
@@ -16,12 +17,12 @@ app.add_middleware(
 
 # Service URLs (localhost for now, K8s DNS later)
 SERVICES = {
-    "user": "http://localhost:8083",
-    "order": "http://localhost:8082",
-    "search": "http://localhost:8081",
+    "user": os.getenv("USER_SERVICE_URL"),
+    "order": os.getenv("ORDER_SERVICE_URL"),
+    "search": os.getenv("SEARCH_SERVICE_URL"),
 }
 
-JWT_SECRET = "testing-jwt"
+JWT_SECRET = os.getenv("JWT_SECRET")
 
 
 @app.get("/health")

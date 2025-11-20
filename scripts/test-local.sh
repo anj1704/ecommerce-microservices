@@ -13,30 +13,30 @@ curl -s http://localhost:8082/health | jq .
 curl -s http://localhost:8081/health | jq .
 curl -s http://localhost:8080/health | jq .
 
-# # 2. Register user
-# echo -e "\n2. Register User"
-# REGISTER_RESPONSE=$(curl -s -X POST $BASE_URL/auth/register \
-#   -H "Content-Type: application/json" \
-#   -d '{
-#     "email": "three@example.com",
-#     "password": "password123",
-#     "name": "Test User"
-#   }')
+# 2. Register user
+echo -e "\n2. Register User"
+REGISTER_RESPONSE=$(curl -s -X POST $BASE_URL/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "three@example.com",
+    "password": "password123",
+    "name": "Test User"
+  }')
 
-# echo $REGISTER_RESPONSE | jq .
-#
-# TOKEN=$(echo $REGISTER_RESPONSE | jq -r '.access_token')
-# USER_ID=$(echo $REGISTER_RESPONSE | jq -r '.user.user_id')
-#
-# echo "Token: $TOKEN"
-# echo "User ID: $USER_ID"
+echo $REGISTER_RESPONSE | jq .
+
+TOKEN=$(echo $REGISTER_RESPONSE | jq -r '.access_token')
+USER_ID=$(echo $REGISTER_RESPONSE | jq -r '.user.user_id')
+
+echo "Token: $TOKEN"
+echo "User ID: $USER_ID"
 
 # 3. Login
 echo -e "\n3. Login"
 LOGIN_RESPONSE=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
+    "email": "three@example.com",
     "password": "password123"
   }')
 

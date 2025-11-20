@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service-config
+  namespace: default
+data:
+  SERVICE_NAME: "order-service"
+  AWS_REGION: "us-east-1"
+  CARTS_TABLE: "ecommerce-ms-shopping-carts-dev"
+  SESSIONS_TABLE: "ecommerce-ms-user-sessions-dev"

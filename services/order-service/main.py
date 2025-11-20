@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 import json
 
 from config import settings
-from database import get_db_connection, init_db
+from database import get_db_connection
 from models import AddToCart, CartItem, OrderResponse
 
 app = FastAPI(title="Order Service", version="1.0.0")
@@ -30,7 +30,8 @@ carts_table = dynamodb.Table(settings.carts_table)
 
 @app.on_event("startup")
 async def startup():
-    init_db()
+    # init_db()
+    pass
 
 
 @app.get("/health")
@@ -115,7 +116,8 @@ async def place_order(user_id: str):
     print(f"cart : {cart}")
     print(f"items : {items}")
     # Calculate total
-    total = sum(float(item["price"]) * float(item["quantity"]) for item in items)
+    total = sum(float(item["price"]) * float(item["quantity"])
+                for item in items)
 
     print(f"Total : {total}")
     # Create order in RDS

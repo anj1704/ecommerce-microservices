@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-database
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-db
+          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-user-service:latest
+
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: user-service-secret
+                  key: DATABASE_URL
+
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              python3 << 'EOF'
+              import os
+              import sys
+              import psycopg2
+
+              db_url = os.environ.get("DATABASE_URL")
+              if not db_url:
+                  print("Error: DATABASE_URL environment variable is missing.")
+                  sys.exit(1)
+
+              schema_sql = """
+              -- Enable UUID support
+              CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+              -- Users Table
+              CREATE TABLE IF NOT EXISTS users (
+                  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  email VARCHAR(255) UNIQUE NOT NULL,
+                  password_hash VARCHAR(255) NOT NULL,
+                  name VARCHAR(255),
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+              CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+              -- Items Table
+              CREATE TABLE IF NOT EXISTS items (
+                  item_id VARCHAR(100) PRIMARY KEY,
+                  description TEXT NOT NULL,
+                  image_url VARCHAR(500),
+                  s3_image_key VARCHAR(500),
+                  price DECIMAL(10,2) NOT NULL,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+              CREATE INDEX IF NOT EXISTS idx_items_price ON items(price);
+
+              -- Orders Table
+              CREATE TABLE IF NOT EXISTS orders (
+                  order_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  user_id VARCHAR(100) NOT NULL,
+                  items JSONB NOT NULL,
+                  total_amount DECIMAL(10,2) NOT NULL,
+                  status VARCHAR(20) DEFAULT 'placed',
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+              CREATE INDEX IF NOT EXISTS idx_user_orders ON orders(user_id, created_at DESC);
+
+              -- Embeddings Table
+              CREATE TABLE IF NOT EXISTS item_embeddings (
+                  item_id VARCHAR(100) PRIMARY KEY,
+                  embedding_vector JSONB,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+              """
+
+              print("Connecting to Database...")
+              try:
+                  # Connect
+                  conn = psycopg2.connect(db_url)
+                  conn.autocommit = True 
+                  
+                  with conn.cursor() as cur:
+                      print("Running Schema Migration...")
+                      cur.execute(schema_sql)
+                      print("Migration Complete! All tables created.")
+                  
+                  conn.close()
+
+              except Exception as e:
+                  print(f"Critical Error during migration: {e}")
+                  sys.exit(1)
+              EOF
+      restartPolicy: OnFailure
+  backoffLimit: 3

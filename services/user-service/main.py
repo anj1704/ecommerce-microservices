@@ -8,7 +8,7 @@ from psycopg2.errorcodes import UNIQUE_VIOLATION
 from psycopg2 import errors
 
 from config import settings
-from database import get_db_connection, init_db
+from database import get_db_connection
 from models import UserCreate, UserLogin, UserResponse, TokenResponse
 
 app = FastAPI(title="User Service", version="1.0.0")
@@ -24,7 +24,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    init_db()
+    # init_db()
+    pass
 
 
 @app.get("/health")
@@ -35,7 +36,8 @@ async def health_check():
 @app.post("/register", response_model=TokenResponse)
 async def register(user: UserCreate):
     # Hash password
-    password_hash = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
+    password_hash = bcrypt.hashpw(
+        user.password.encode(), bcrypt.gensalt()).decode()
 
     try:
         with get_db_connection() as conn:

@@ -17,6 +17,8 @@ done
 # Build and push each service
 cd services
 
+# Note that we tag the images with the default latest tag
+# Verify that version numbers in k8s config and docker images match
 for service in user-service order-service search-service api-gateway; do
   echo "Building ${service}..."
   cd ${service}

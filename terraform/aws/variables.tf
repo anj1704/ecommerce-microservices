@@ -28,3 +28,9 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "opensearch_password" {
+  type      = string
+  sensitive = true
+  default   = "OpenSearch123!"
+}

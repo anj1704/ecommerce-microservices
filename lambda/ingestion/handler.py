@@ -6,10 +6,13 @@ from sentence_transformers import SentenceTransformer
 from PIL import Image
 import io
 import requests
+from opensearchpy import OpenSearch, RequestsHttpConnection
+from datetime import datetime
 
 # Initialize clients and model
 s3_client = boto3.client("s3")
 model = None
+opensearch_client = None
 
 # Environment variables
 RDS_HOST = os.environ["RDS_HOST"]
@@ -17,6 +20,9 @@ RDS_DATABASE = os.environ["RDS_DATABASE"]
 RDS_USER = os.environ["RDS_USER"]
 RDS_PASSWORD = os.environ["RDS_PASSWORD"]
 IMAGES_BUCKET = os.environ["IMAGES_BUCKET"]
+OPENSEARCH_ENDPOINT = os.environ["OPENSEARCH_ENDPOINT"]
+OPENSEARCH_USERNAME = os.environ["OPENSEARCH_USERNAME"]
+OPENSEARCH_PASSWORD = os.environ["OPENSEARCH_PASSWORD"]
 
 
 def get_db_connection():
@@ -24,6 +30,46 @@ def get_db_connection():
     return psycopg2.connect(
         host=RDS_HOST, database=RDS_DATABASE, user=RDS_USER, password=RDS_PASSWORD
     )
+
+
+def get_opensearch_client():
+    """Get OpenSearch client"""
+    global opensearch_client
+    if opensearch_client is None:
+        opensearch_client = OpenSearch(
+            hosts=[{"host": OPENSEARCH_ENDPOINT, "port": 443}],
+            http_auth=(OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD),
+            use_ssl=True,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection,
+            timeout=30,
+        )
+    return opensearch_client
+
+
+def store_in_opensearch(
+    item_id, description, price, image_url, s3_image_key, embedding
+):
+    """Store item with embedding in OpenSearch"""
+    client = get_opensearch_client()
+
+    document = {
+        "item_id": item_id,
+        "description": description,
+        "price": price,
+        "image_url": image_url,
+        "s3_image_key": s3_image_key,
+        "embedding": embedding,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+
+    try:
+        response = client.index(index="items", id=item_id, body=document, refresh=True)
+        print(f"Item indexed in OpenSearch: {item_id}, result: {response['result']}")
+        return True
+    except Exception as e:
+        print(f"Failed to index in OpenSearch: {e}")
+        return False
 
 
 def load_model():
@@ -78,7 +124,8 @@ def generate_embedding(text):
     """Generate BERT embedding for text"""
     model = load_model()
     embedding = model.encode(text)
-    return embedding.tolist()
+
+    return embedding.squeeze().tolist()
 
 
 def store_item_in_db(item_data, s3_image_key, embedding):
@@ -106,28 +153,18 @@ def store_item_in_db(item_data, s3_image_key, embedding):
                 ),
             )
 
-            # Store embedding in temporary table (until OpenSearch is ready)
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS item_embeddings (
-                    item_id VARCHAR(100) PRIMARY KEY,
-                    embedding_vector JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-
-            cur.execute(
-                """
-                INSERT INTO item_embeddings (item_id, embedding_vector)
-                VALUES (%s, %s)
-                ON CONFLICT (item_id) DO UPDATE
-                SET embedding_vector = EXCLUDED.embedding_vector,
-                    created_at = CURRENT_TIMESTAMP
-            """,
-                (item_data["item_id"], json.dumps(embedding)),
-            )
-
         conn.commit()
         print(f"Item {item_data['item_id']} stored in database")
+
+        # Store in OpenSearch
+        store_in_opensearch(
+            item_data["item_id"],
+            item_data["description"],
+            item_data["price"],
+            item_data["image_url"],
+            s3_image_key,
+            embedding,
+        )
 
     except Exception as e:
         conn.rollback()

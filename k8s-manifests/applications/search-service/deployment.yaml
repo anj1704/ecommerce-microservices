@@ -28,6 +28,21 @@ spec:
                 secretKeyRef:
                   name: search-service-secret
                   key: DATABASE_URL
+            - name: OPENSEARCH_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENSEARCH_ENDPOINT
+            - name: OPENSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENSEARCH_USERNAME
+            - name: OPENSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENSEARCH_PASSWORD
             - name: SERVICE_NAME
               valueFrom:
                 configMapKeyRef:

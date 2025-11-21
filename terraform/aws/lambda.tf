@@ -33,6 +33,11 @@ resource "aws_lambda_function" "ingestion" {
       RDS_PASSWORD    = var.db_password
       IMAGES_BUCKET   = module.databases.s3_item_images_bucket
       
+      # OpenSearch config
+      OPENSEARCH_ENDPOINT = aws_opensearch_domain.main.endpoint
+      OPENSEARCH_USERNAME = "admin"
+      OPENSEARCH_PASSWORD = var.opensearch_password
+
       # VARIABLES FOR BERT MODEL
       HF_HOME = "/tmp"
       TRANSFORMERS_CACHE = "/tmp"

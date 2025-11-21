@@ -23,6 +23,12 @@ kubectl apply -f jobs/init-db-job.yaml
 echo "Waiting for DB Job to complete..."
 kubectl wait --for=condition=complete --timeout=120s job/init-database
 
+echo "Initializing vector store..."
+kubectl delete job init-opensearch --ignore-not-found
+kubectl apply -f jobs/init-opensearch-job.yaml
+echo "Waiting for Opensearch Job to complete..."
+kubectl wait --for=condition=complete --timeout=120s job/init-opensearch
+
 echo "Deploying services..."
 kubectl apply -f applications/user-service/
 kubectl apply -f applications/order-service/

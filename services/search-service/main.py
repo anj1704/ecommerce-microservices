@@ -50,7 +50,7 @@ async def health_check():
 @app.get("/search")
 async def search_items(q: str, limit: int = 10):
     # Generate query embedding
-    query_embedding = model.encode(q)
+    query_embedding = model.encode(q).squeeze().tolist()
 
     # k-NN search query
     search_body = {

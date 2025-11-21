@@ -50,7 +50,7 @@ echo "User ID: $USER_ID"
 
 # 4. Search items
 echo -e "\n4. Search Items"
-curl -s "$BASE_URL/search?q=laptop" \
+curl -s "$BASE_URL/search?q=cookies" \
   -H "Authorization: Bearer $TOKEN" | jq .
 
 # 5. Add to cart

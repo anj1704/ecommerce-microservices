@@ -1,0 +1,112 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-opensearch
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-os
+          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-search-service:latest
+
+          env:
+            - name: OPENSEARCH_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENSEARCH_ENDPOINT
+            - name: OPENSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENSEARCH_USERNAME
+            - name: OPENSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENSEARCH_PASSWORD
+
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Starting OpenSearch Init Script..."
+
+              python3 << 'EOF'
+              import sys
+              import os
+              from opensearchpy import OpenSearch, RequestsHttpConnection
+
+              host = os.environ.get("OPENSEARCH_ENDPOINT")
+              username = os.environ.get("OPENSEARCH_USERNAME")
+              password = os.environ.get("OPENSEARCH_PASSWORD")
+
+              if not password:
+                  print("Error: OPENSEARCH_PASSWORD is missing.")
+                  sys.exit(1)
+
+              print(f"Connecting to {host} as {username}...")
+
+              try:
+                  client = OpenSearch(
+                      hosts=[{"host": host, "port": 443}],
+                      http_auth=(username, password),
+                      use_ssl=True,
+                      verify_certs=True,
+                      connection_class=RequestsHttpConnection,
+                      timeout=30
+                  )
+
+                  info = client.info()
+                  print(f"Connected to OpenSearch version {info['version']['number']}")
+              except Exception as e:
+                  print(f"Connection Failed: {e}")
+                  sys.exit(1)
+
+              index_name = "items"
+              index_body = {
+                  "settings": {
+                      "index": {
+                          "knn": True,
+                          "knn.algo_param.ef_search": 100,
+                          "number_of_shards": 1,
+                          "number_of_replicas": 0
+                      }
+                  },
+                  "mappings": {
+                      "properties": {
+                          "item_id": {"type": "keyword"},
+                          "description": {"type": "text", "analyzer": "standard"},
+                          "price": {"type": "float"},
+                          "image_url": {"type": "keyword"},
+                          "s3_image_key": {"type": "keyword"},
+                          "embedding": {
+                              "type": "knn_vector",
+                              "dimension": 384,
+                              "method": {
+                                  "name": "hnsw",
+                                  "space_type": "l2",
+                                  "engine": "nmslib",
+                                  "parameters": {"ef_construction": 128, "m": 24}
+                              }
+                          },
+                          "created_at": {"type": "date"}
+                      }
+                  }
+              }
+
+              if client.indices.exists(index=index_name):
+                  print(f"Index '{index_name}' already exists. Deleting...")
+                  client.indices.delete(index=index_name)
+
+              print(f"Creating index '{index_name}'...")
+              try:
+                  response = client.indices.create(index=index_name, body=index_body)
+                  print(f"Index created successfully: {response}")
+              except Exception as e:
+                  print(f"Failed to create index: {e}")
+                  sys.exit(1)
+
+              EOF
+      restartPolicy: OnFailure
+  backoffLimit: 3

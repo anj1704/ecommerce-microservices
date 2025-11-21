@@ -17,7 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load BERT model on startup
 model = None
 opensearch_client = None
 
@@ -25,6 +24,7 @@ opensearch_client = None
 @app.on_event("startup")
 async def startup():
     global model
+    global opensearch_client
     # init_db()
     print("Loading BERT model...")
     model = SentenceTransformer(settings.model_name)

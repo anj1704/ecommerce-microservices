@@ -85,3 +85,13 @@ output "opensearch_dashboard_endpoint" {
   value       = "${aws_opensearch_domain.main.endpoint}/_dashboards"
   sensitive   = true
 }
+
+output "frontend_bucket_name" {
+  description = "Frontend S3 bucket name"
+  value       = aws_s3_bucket.frontend.id
+}
+
+output "frontend_website_url" {
+  description = "S3 website endpoint"
+  value       = aws_s3_bucket_website_configuration.frontend.website_endpoint
+}

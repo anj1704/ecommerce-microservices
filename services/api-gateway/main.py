@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 import httpx
 import jwt
 import os
@@ -14,6 +15,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Prometheus metrics
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 # Service URLs (localhost for now, K8s DNS later)
 SERVICES = {
@@ -82,22 +87,6 @@ async def place_order(user_id: str, authorization: Optional[str] = Header(None))
         return response.json()
 
 
-@app.delete("/cart/{user_id}/remove/{item_id}")
-async def remove_from_cart(
-    user_id: str, item_id: str, authorization: Optional[str] = Header(None)
-):
-    verify_token(authorization)
-    async with httpx.AsyncClient() as client:
-        response = await client.delete(
-            f"{SERVICES['order']}/cart/{user_id}/remove/{item_id}"
-        )
-
-        if response.status_code >= 400:
-            raise HTTPException(
-                status_code=response.status_code, detail=response.text)
-        return response.json()
-
-
 @app.get("/orders/{user_id}")
 async def get_orders(user_id: str, authorization: Optional[str] = Header(None)):
     verify_token(authorization)
@@ -108,8 +97,7 @@ async def get_orders(user_id: str, authorization: Optional[str] = Header(None)):
 
 def verify_token(authorization: Optional[str]):
     if not authorization:
-        raise HTTPException(
-            status_code=401, detail="Authorization header required")
+        raise HTTPException(status_code=401, detail="Authorization header required")
 
     try:
         token = authorization.replace("Bearer ", "")

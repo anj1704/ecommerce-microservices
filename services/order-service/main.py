@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 import boto3
 from decimal import Decimal
 import time
@@ -19,6 +20,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Prometheus metrics
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 dynamodb_config = {"region_name": settings.aws_region}
 if settings.dynamodb_endpoint:

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from datetime import datetime, timedelta
 import bcrypt
 import jwt
@@ -20,6 +21,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Prometheus metrics
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 
 @app.on_event("startup")

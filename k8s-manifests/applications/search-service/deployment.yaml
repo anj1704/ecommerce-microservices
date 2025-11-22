@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: search-service
-          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-search-service:v1.0.1
+          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-search-service:v1.0.2
           imagePullPolicy: Always
           ports:
             - containerPort: 8081

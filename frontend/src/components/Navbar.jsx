@@ -41,14 +41,13 @@ const Navbar = () => {
 
   return (
     <nav style={navStyle}>
-      {/* Brand / Logo */}
+      {/* Brand / Logo - Changed to Generic Store Name */}
       <Link to="/" style={brandStyle}>
-        📚 CloudBookShop
+        🛍️ CloudMart
       </Link>
 
-      {/* Navigation Links */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Link to="/" style={linkStyle}>Home</Link>
+        <Link to="/" style={linkStyle}>Shop</Link> {/* Changed "Home" to "Shop" */}
         <Link to="/cart" style={linkStyle}>🛒 Cart</Link>
         <Link to="/orders" style={linkStyle}>Orders</Link>
 

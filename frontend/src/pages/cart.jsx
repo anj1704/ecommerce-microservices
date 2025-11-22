@@ -122,7 +122,8 @@ export default function Cart() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <tr style={{ textAlign: 'left' }}>
-                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Book</th>
+                  {/* Changed "Book" to "Item" */}
+                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Item</th>
                   <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Price</th>
                   <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Qty</th>
                   <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Total</th>

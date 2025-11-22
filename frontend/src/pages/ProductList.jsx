@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
-import api from '../api'; // ✅ This was missing!
+import api from '../api';
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
@@ -10,35 +10,40 @@ export default function ProductList() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // 1. Handle Search Query (Default to "book" if empty)
-        const queryTerm = searchQuery || "book"; 
-        const endpoint = `/search?q=${queryTerm}`;
+        // 1. Determine Search Term
+        // Since it's a General Store, we default to "item" to get a broad list
+        // if the search bar is empty.
+        const queryTerm = searchQuery || "item"; 
+        const endpoint = `/search?q=${queryTerm}&limit=100`;
         
         // 2. Call the Real API
         const response = await api.get(endpoint);
         
-        // 3. Map the Data (Backend 'description' -> Frontend 'caption')
+        // 3. Map Data: Backend (Search Service) -> Frontend (UI)
         // The Search Service returns { results: [...] }
         const rawItems = response.data.results || []; 
 
         const mappedProducts = rawItems.map(item => ({
           ...item,
-          id: item.item_id,           // Backend sends 'item_id'
-          caption: item.description,  // Backend sends 'description'
-          price: parseFloat(item.price) 
+          id: item.item_id,
+          caption: item.description,
+          price: parseFloat(item.price),
+          // ✅ NEW: Map the backend image URL to the frontend object
+          image: item.image_url 
         }));
 
         setProducts(mappedProducts);
         
       } catch (err) {
         console.error("Failed to fetch products:", err);
+        // If the API fails, we show nothing (no mock data fallback)
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    // Debounce the search so we don't spam the API while typing
+    // Debounce the search (wait 500ms after typing stops)
     const delayDebounceFn = setTimeout(() => {
       fetchProducts();
     }, 500);
@@ -48,31 +53,38 @@ export default function ProductList() {
 
   const handleAddToCart = async (product) => {
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId'); // <--- Get the ID
+    const userId = localStorage.getItem('userId');
 
-    if (!token || !userId) {
-      alert("Please login to add items to cart!");
+    if (!token) {
+      alert("Please login to shop!");
+      return;
+    }
+
+    if (!userId) {
+      alert("Session error: User ID missing. Please logout and login again.");
       return;
     }
 
     try {
-      // URL Matches Script: /cart/$USER_ID/add
+      // 4. Real Add To Cart Logic
+      // Matches the endpoint: POST /cart/{user_id}/add
       await api.post(`/cart/${userId}/add`, {
-        item_id: product.id, // Script uses "item_id"
-        quantity: 1,         // Script uses "quantity"
-        price: product.price // Script uses "price"
+        item_id: product.id,
+        quantity: 1,
+        price: product.price
       });
-      alert(`Added to cart: "${product.caption?.substring(0, 20)}..."`);
+      
+      alert(`Added to cart: "${product.caption.substring(0, 20)}..."`);
     } catch (err) {
       console.error("Add to cart failed:", err);
-      alert("Failed to add item. Check console.");
+      alert("Failed to add item to cart.");
     }
   };
 
   return (
     <div className="container">
       
-      {/* Hero Search Section */}
+      {/* Hero Search Section - Rebranded for CloudMart */}
       <div style={{ 
         marginBottom: '30px', 
         display: 'flex', 
@@ -84,7 +96,7 @@ export default function ProductList() {
       }}>
         <input 
           type="text" 
-          placeholder="Search for books by description..." 
+          placeholder="Search for items, electronics, groceries..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ flex: 1 }} 
@@ -93,16 +105,16 @@ export default function ProductList() {
       </div>
 
       {loading ? (
-        <p style={{textAlign: 'center', color: '#666'}}>Loading library...</p>
+        <p style={{textAlign: 'center', color: '#666'}}>Loading inventory...</p>
       ) : (
         <div className="grid"> 
           {products.length > 0 ? (
-            products.map(book => (
-              <ProductCard key={book.id} product={book} onAddToCart={handleAddToCart} />
+            products.map(item => (
+              <ProductCard key={item.id} product={item} onAddToCart={handleAddToCart} />
             ))
           ) : (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px' }}>
-              <p style={{ fontSize: '18px', color: '#64748b' }}>No books found matching "{searchQuery}"</p>
+              <p style={{ fontSize: '18px', color: '#64748b' }}>No items found matching "{searchQuery}"</p>
             </div>
           )}
         </div>

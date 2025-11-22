@@ -9,29 +9,44 @@ const ProductCard = ({ product, onAddToCart }) => {
       transition: 'transform 0.2s ease',
       cursor: 'default'
     }}>
-      {/* Book Cover Placeholder */}
+      
+      {/* IMAGE SECTION */}
       <div style={{ 
         height: '180px', 
-        backgroundColor: '#f1f5f9', 
-        borderRadius: '4px', 
+        marginBottom: '15px',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        marginBottom: '15px',
-        color: '#94a3b8',
-        fontSize: '40px'
+        overflow: 'hidden', // Ensures image doesn't spill out
+        borderRadius: '4px',
+        backgroundColor: '#f8fafc'
       }}>
-        📖
+        {product.image ? (
+          // ✅ CASE A: Real Image exists
+          <img 
+            src={product.image} 
+            alt={product.caption} 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'contain' // Keeps aspect ratio (doesn't stretch)
+            }}
+            // Fallback: If image fails to load, hide it (or show box)
+            onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerText = '📦'; }}
+          />
+        ) : (
+          // ✅ CASE B: No Image URL (Fallback to Box)
+          <div style={{ color: '#94a3b8', fontSize: '40px' }}>📦</div>
+        )}
       </div>
 
-      {/* Content - Now just the Caption */}
+      {/* CAPTION SECTION */}
       <div style={{ flex: 1, marginBottom: '15px' }}>
         <p style={{ 
           margin: '0', 
           color: '#334155', 
           fontSize: '15px', 
           lineHeight: '1.5',
-          // These lines clamp the text to 3 lines max
           display: '-webkit-box',
           WebkitLineClamp: '3',
           WebkitBoxOrient: 'vertical',
@@ -42,7 +57,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         </p>
       </div>
 
-      {/* Footer: Price & Button */}
+      {/* FOOTER */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
         <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>
           ${product.price.toFixed(2)}

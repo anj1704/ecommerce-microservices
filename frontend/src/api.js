@@ -3,7 +3,7 @@ import axios from 'axios';
 // 1. Create a centralized Axios instance
 // We point this to your API Gateway (Port 8080)
 const api = axios.create({
-  baseURL: 'http://localhost:8080', // This routes to your FastAPI Gateway
+  baseURL: 'http://a7e2b445c41ad4dde9c639ec8b4c6a7e-4665936.us-east-1.elb.amazonaws.com', // This routes to your FastAPI Gateway
   headers: {
     'Content-Type': 'application/json',
   },

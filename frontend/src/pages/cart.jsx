@@ -16,22 +16,16 @@ export default function Cart() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        // --- REAL CODE ---
-        // const response = await api.get('/cart');
-        // setCartItems(response.data.items);
-
-        // --- MOCK CODE ---
-        console.log("Fetching cart...");
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-        setCartItems(MOCK_CART);
-        
+        // ✅ REAL CODE
+        const response = await api.get('/cart');
+        // Ensure we handle cases where cart might be null
+        setCartItems(response.data.items || []); 
       } catch (err) {
         console.error("Error fetching cart:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchCart();
   }, []);
 
@@ -44,26 +38,20 @@ export default function Cart() {
   };
 
   const handlePlaceOrder = async () => {
-    if (cartItems.length === 0) {
-      alert("Your cart is empty!");
-      return;
-    }
-
+    if (cartItems.length === 0) return alert("Cart is empty!");
+    
     if (window.confirm(`Confirm purchase for $${totalPrice.toFixed(2)}?`)) {
       try {
-        // --- REAL CODE ---
-        // await api.post('/orders'); // Backend moves Cart -> Orders
-
-        // --- MOCK CODE ---
-        console.log("Placing order...");
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // ✅ REAL CODE: Trigger the Order Service
+        await api.post('/orders'); 
         
-        alert("Order placed successfully! Redirecting to your Order History.");
-        setCartItems([]); // Clear cart
-        navigate('/orders'); // Go to Order History page
+        alert("Order placed successfully!");
+        setCartItems([]); 
+        navigate('/orders'); 
 
       } catch (err) {
-        alert("Failed to place order.");
+        console.error("Order failed:", err);
+        alert("Failed to place order. Check console.");
       }
     }
   };
@@ -91,17 +79,28 @@ export default function Cart() {
             <tbody>
               {cartItems.map(item => (
                 <tr key={item.book_id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '10px' }}>
-                    <strong>{item.title}</strong><br/>
-                    <span style={{ fontSize: '12px', color: '#666' }}>{item.author}</span>
+                  <td style={{ padding: '15px' }}>
+                    {/* UPDATED: Display Caption instead of Title/Author */}
+                    <div style={{ 
+                      maxWidth: '300px', 
+                      display: '-webkit-box',
+                      WebkitLineClamp: '2', // Limit to 2 lines
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      fontSize: '14px',
+                      color: '#334155',
+                      lineHeight: '1.4'
+                    }}>
+                      {item.caption || "Item description unavailable"}
+                    </div>
                   </td>
-                  <td style={{ padding: '10px' }}>${item.price.toFixed(2)}</td>
-                  <td style={{ padding: '10px' }}>{item.quantity}</td>
-                  <td style={{ padding: '10px' }}>${(item.price * item.quantity).toFixed(2)}</td>
-                  <td style={{ padding: '10px' }}>
+                  <td style={{ padding: '15px' }}>${item.price.toFixed(2)}</td>
+                  <td style={{ padding: '15px' }}>{item.quantity}</td>
+                  <td style={{ padding: '15px' }}>${(item.price * item.quantity).toFixed(2)}</td>
+                  <td style={{ padding: '15px' }}>
                     <button 
                       onClick={() => handleRemove(item.book_id)}
-                      style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                      style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}
                     >
                       Remove
                     </button>

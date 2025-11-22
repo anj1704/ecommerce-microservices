@@ -2,40 +2,55 @@ import React from 'react';
 
 const ProductCard = ({ product, onAddToCart }) => {
   return (
-    <div style={{ 
-      border: '1px solid #ddd', 
-      padding: '15px', 
-      borderRadius: '8px', 
-      width: '200px',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between'
+    <div className="card" style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      transition: 'transform 0.2s ease',
+      cursor: 'default'
     }}>
-      {/* Image Placeholder - In real app, use product.image_url */}
-      <div style={{ height: '150px', background: '#f0f0f0', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: '#888' }}>Book Cover</span>
+      {/* Book Cover Placeholder */}
+      <div style={{ 
+        height: '180px', 
+        backgroundColor: '#f1f5f9', 
+        borderRadius: '4px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        marginBottom: '15px',
+        color: '#94a3b8',
+        fontSize: '40px'
+      }}>
+        📖
       </div>
 
-      <div>
-        <h3 style={{ fontSize: '16px', margin: '0 0 5px 0' }}>{product.title}</h3>
-        <p style={{ color: '#555', fontSize: '14px', margin: '0 0 10px 0' }}>{product.author}</p>
-        <p style={{ fontWeight: 'bold', color: '#2c3e50' }}>${product.price}</p>
+      {/* Content - Now just the Caption */}
+      <div style={{ flex: 1, marginBottom: '15px' }}>
+        <p style={{ 
+          margin: '0', 
+          color: '#334155', 
+          fontSize: '15px', 
+          lineHeight: '1.5',
+          // These lines clamp the text to 3 lines max
+          display: '-webkit-box',
+          WebkitLineClamp: '3',
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          {product.caption}
+        </p>
       </div>
 
-      <button 
-        onClick={() => onAddToCart(product)}
-        style={{ 
-          marginTop: '10px', 
-          padding: '8px', 
-          background: '#007bff', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '4px',
-          cursor: 'pointer'
-        }}
-      >
-        Add to Cart
-      </button>
+      {/* Footer: Price & Button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+        <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>
+          ${product.price.toFixed(2)}
+        </span>
+        <button onClick={() => onAddToCart(product)} style={{ fontSize: '14px' }}>
+          Add to Cart
+        </button>
+      </div>
     </div>
   );
 };

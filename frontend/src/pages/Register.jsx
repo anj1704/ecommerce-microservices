@@ -10,19 +10,16 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // --- REAL BACKEND CODE (Keep commented out) ---
-      // await api.post('/register', formData);
+      // ✅ REAL BACKEND CODE (Active)
+      await api.post('/register', formData);
       
-      // --- MOCK CODE (Use this for testing) ---
-      console.log("Simulating Registration for:", formData);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Fake 1-second delay
-      
-      alert('Registration successful (MOCKED)! Please login.');
+      alert('Registration successful! Please login.');
       navigate('/login');
       
     } catch (err) {
-      setError('Registration failed. Try a different username.');
-      console.error(err);
+      // Improved error handling to see what the server says
+      console.error("Registration Error:", err.response?.data || err.message);
+      setError('Registration failed. ' + (err.response?.data?.detail || 'Try a different username.'));
     }
   };
 

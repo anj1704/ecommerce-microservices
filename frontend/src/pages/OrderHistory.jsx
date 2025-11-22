@@ -1,45 +1,16 @@
 import { useState, useEffect } from 'react';
-// import api from '../api'; // Keep for later
+import api from '../api'; // ✅ ADDED: You need this to fetch data
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- MOCK DATA (What the "Past Orders Service" would send) ---
-  const MOCK_ORDERS = [
-    {
-      order_id: 101,
-      date: '2025-11-15',
-      total: 85.50,
-      status: 'DELIVERED',
-      items: [
-        { title: 'Designing Data-Intensive Apps', quantity: 1, price: 35.50 },
-        { title: 'Cloud Computing', quantity: 1, price: 50.00 }
-      ]
-    },
-    {
-      order_id: 102,
-      date: '2025-11-18',
-      total: 42.00,
-      status: 'SHIPPED',
-      items: [
-        { title: 'Clean Code', quantity: 1, price: 42.00 }
-      ]
-    }
-  ];
-
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // --- REAL CODE ---
-        // const response = await api.get('/orders');
-        // setOrders(response.data);
-
-        // --- MOCK CODE ---
-        console.log("Fetching order history...");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setOrders(MOCK_ORDERS);
-
+        // ✅ REAL CODE
+        const response = await api.get('/orders');
+        setOrders(response.data);
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {
@@ -50,51 +21,73 @@ export default function OrderHistory() {
     fetchOrders();
   }, []);
 
-  if (loading) return <p>Loading your orders...</p>;
+  if (loading) return <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading your orders...</p>;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2>Your Order History</h2>
+    <div className="container" style={{ maxWidth: '800px' }}>
+      <h2 style={{ marginBottom: '20px' }}>Your Order History</h2>
 
       {orders.length === 0 ? (
         <p>You haven't placed any orders yet.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* ✅ FIX: Added the map over 'orders' here */}
           {orders.map(order => (
-            <div key={order.order_id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <div key={order.order_id} className="card" style={{ padding: '25px' }}>
               
-              {/* Order Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}>
+              {/* ✅ ADDED: The Order Header (ID, Date, Total) was missing */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                borderBottom: '1px solid #e2e8f0', 
+                paddingBottom: '15px', 
+                marginBottom: '15px' 
+              }}>
                 <div>
-                  <strong>Order #{order.order_id}</strong>
-                  <span style={{ marginLeft: '15px', color: '#666', fontSize: '14px' }}>{order.date}</span>
+                  <strong style={{ fontSize: '18px', color: '#1e293b' }}>Order #{order.order_id}</strong>
+                  <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{order.date}</div>
                 </div>
-                <div>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px', 
-                    background: order.status === 'DELIVERED' ? '#d4edda' : '#fff3cd',
-                    color: order.status === 'DELIVERED' ? '#155724' : '#856404'
-                  }}>
-                    {order.status}
-                  </span>
-                  <strong style={{ marginLeft: '15px' }}>${order.total.toFixed(2)}</strong>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>Total</div>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>
+                    ${order.total.toFixed(2)}
+                  </div>
                 </div>
               </div>
 
               {/* Order Items List */}
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {order.items.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '5px 0' }}>
-                    <span>{item.quantity}x {item.title}</span>
-                    <span>${item.price.toFixed(2)}</span>
+                  <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', color: '#334155', alignItems: 'flex-start' }}>
+                    
+                    {/* Left side: Quantity + Caption */}
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <span style={{ fontWeight: '600', minWidth: '20px' }}>{item.quantity}x</span>
+                      
+                      {/* Caption with truncation */}
+                      <span style={{ 
+                        maxWidth: '400px', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis',
+                        display: 'inline-block',
+                        color: '#475569'
+                      }}>
+                        {item.caption || "Item description unavailable"}
+                      </span>
+                    </div>
+
+                    {/* Right side: Price */}
+                    <span style={{ whiteSpace: 'nowrap' }}>${item.price.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
-
+              
             </div>
           ))}
+          
         </div>
       )}
     </div>

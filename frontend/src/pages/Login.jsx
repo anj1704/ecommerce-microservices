@@ -11,25 +11,20 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // --- REAL BACKEND CODE (Keep this commented out) ---
-      // const response = await api.post('/login', credentials);
-      // const token = response.data.access_token; 
+      // ✅ REAL BACKEND CODE (Active)
+      // Note: If your User Service uses standard OAuth2, it might expect form data.
+      // If this fails with "422 Unprocessable Entity", tell me!
+      const response = await api.post('/login', credentials);
 
-      // --- FAKE MOCK CODE ---
-      console.log("Simulating Login for:", credentials);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Fake delay
-      
-      // Create a fake token
-      const token = "fake-jwt-token-123456789"; 
+      // Most FastAPI setups return 'access_token'. Check DevTools if undefined.
+      const token = response.data.access_token; 
 
-      // Save it just like the real app would
       localStorage.setItem('token', token);
-
       navigate('/');
       
     } catch (err) {
-      setError('Invalid username or password');
-      console.error(err);
+      console.error("Login Error:", err.response?.data || err.message);
+      setError('Login failed. Check your username/password.');
     }
   };
 

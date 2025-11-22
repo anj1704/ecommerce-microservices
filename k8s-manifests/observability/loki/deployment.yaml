@@ -30,11 +30,11 @@ spec:
               mountPath: /loki
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              memory: "256Mi"
+              cpu: "125m"
             limits:
-              memory: "2Gi"
-              cpu: "1000m"
+              memory: "1Gi"
+              cpu: "500m"
           livenessProbe:
             httpGet:
               path: /ready
@@ -53,4 +53,3 @@ spec:
             name: loki-config
         - name: loki-storage
           emptyDir: {}
-

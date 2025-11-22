@@ -20,12 +20,12 @@ spec:
         - name: prometheus
           image: prom/prometheus:v2.48.0
           args:
-            - '--config.file=/etc/prometheus/prometheus.yml'
-            - '--storage.tsdb.path=/prometheus'
-            - '--storage.tsdb.retention.time=30d'
-            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-            - '--web.console.templates=/usr/share/prometheus/consoles'
-            - '--web.enable-lifecycle'
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=30d"
+            - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+            - "--web.console.templates=/usr/share/prometheus/consoles"
+            - "--web.enable-lifecycle"
           ports:
             - containerPort: 9090
               name: http
@@ -37,10 +37,10 @@ spec:
           resources:
             requests:
               memory: "512Mi"
-              cpu: "250m"
+              cpu: "100m"
             limits:
               memory: "2Gi"
-              cpu: "1000m"
+              cpu: "500m"
           livenessProbe:
             httpGet:
               path: /-/healthy
@@ -59,4 +59,3 @@ spec:
             name: prometheus-config
         - name: prometheus-storage
           emptyDir: {}
-

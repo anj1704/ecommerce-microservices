@@ -1,24 +1,74 @@
 import { useState, useEffect } from 'react';
-import api from '../api'; // ✅ ADDED: You need this to fetch data
+import api from '../api';
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
       try {
-        // ✅ REAL CODE
-        const response = await api.get('/orders');
-        setOrders(response.data);
+        // 1. Fetch the raw orders
+        const ordersRes = await api.get(`/orders/${userId}`);
+        const rawOrders = ordersRes.data;
+
+        // 2. Fetch products to lookup the names (So video looks good!)
+        // We get a list of all items to match IDs to Captions
+        let productMap = {};
+        try {
+          const productsRes = await api.get('/search?q=book&limit=100');
+          const productList = productsRes.data.results || [];
+          // Create a dictionary: { "1": "Cloud Computing...", "2": "Clean Code..." }
+          productList.forEach(p => {
+            productMap[p.item_id] = p.description;
+          });
+        } catch (e) {
+          console.warn("Could not fetch product details for history");
+        }
+
+        // 3. Process the Orders (Fixing the Crash)
+        const safeOrders = rawOrders.map(order => {
+          let parsedItems = [];
+          
+          // FIX A: Handle "items" being a JSON string or an Array
+          if (typeof order.items === 'string') {
+            try {
+              parsedItems = JSON.parse(order.items);
+            } catch (e) {
+              console.error("Failed to parse items JSON", e);
+            }
+          } else if (Array.isArray(order.items)) {
+            parsedItems = order.items;
+          }
+
+          // FIX B: Map IDs to Captions
+          const enrichedItems = parsedItems.map(item => ({
+            ...item,
+            // Use the map we built, or fallback to the ID
+            caption: productMap[item.itemId || item.item_id] || item.description || `Item #${item.itemId}`
+          }));
+
+          return {
+            ...order,
+            items: enrichedItems,
+            // FIX C: Handle 'total_amount' vs 'total'
+            total: order.total_amount !== undefined ? parseFloat(order.total_amount) : parseFloat(order.total || 0)
+          };
+        });
+
+        setOrders(safeOrders);
+
       } catch (err) {
-        console.error("Error fetching orders:", err);
+        console.error("Error fetching history:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
+    fetchData();
   }, []);
 
   if (loading) return <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading your orders...</p>;
@@ -31,12 +81,10 @@ export default function OrderHistory() {
         <p>You haven't placed any orders yet.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          {/* ✅ FIX: Added the map over 'orders' here */}
           {orders.map(order => (
             <div key={order.order_id} className="card" style={{ padding: '25px' }}>
               
-              {/* ✅ ADDED: The Order Header (ID, Date, Total) was missing */}
+              {/* Order Header */}
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
@@ -47,12 +95,16 @@ export default function OrderHistory() {
               }}>
                 <div>
                   <strong style={{ fontSize: '18px', color: '#1e293b' }}>Order #{order.order_id}</strong>
-                  <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{order.date}</div>
+                  <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+                    {/* Handle Date formatting safely */}
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString() : order.date}
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>Total</div>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>
-                    ${order.total.toFixed(2)}
+                    {/* Safe Number Formatting */}
+                    ${order.total?.toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -62,11 +114,9 @@ export default function OrderHistory() {
                 {order.items.map((item, index) => (
                   <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', color: '#334155', alignItems: 'flex-start' }}>
                     
-                    {/* Left side: Quantity + Caption */}
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <span style={{ fontWeight: '600', minWidth: '20px' }}>{item.quantity}x</span>
                       
-                      {/* Caption with truncation */}
                       <span style={{ 
                         maxWidth: '400px', 
                         whiteSpace: 'nowrap', 
@@ -75,19 +125,17 @@ export default function OrderHistory() {
                         display: 'inline-block',
                         color: '#475569'
                       }}>
-                        {item.caption || "Item description unavailable"}
+                        {item.caption}
                       </span>
                     </div>
 
-                    {/* Right side: Price */}
-                    <span style={{ whiteSpace: 'nowrap' }}>${item.price.toFixed(2)}</span>
+                    <span style={{ whiteSpace: 'nowrap' }}>${parseFloat(item.price).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
               
             </div>
           ))}
-          
         </div>
       )}
     </div>

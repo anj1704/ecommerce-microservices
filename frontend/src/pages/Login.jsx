@@ -1,61 +1,74 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 
 export default function Login() {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  // FIX 1: Change 'username' to 'email' to match Backend requirement
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Helper to safely extract User ID
+  const parseJwt = (token) => {
+    try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ REAL BACKEND CODE (Active)
-      // Note: If your User Service uses standard OAuth2, it might expect form data.
-      // If this fails with "422 Unprocessable Entity", tell me!
+      // Login request now sends { email, password }
       const response = await api.post('/auth/login', credentials);
+      
+      const token = response.data.access_token;
+      
+      // Smart ID Extraction (from response OR token)
+      let userId = response.data.user?.user_id;
+      if (!userId) {
+        const decoded = parseJwt(token);
+        userId = decoded?.user_id || decoded?.sub;
+      }
 
-      // Most FastAPI setups return 'access_token'. Check DevTools if undefined.
-      const token = response.data.access_token; 
+      if (!userId) throw new Error("Missing User ID");
 
       localStorage.setItem('token', token);
+      localStorage.setItem('userId', userId);
+
       navigate('/');
       
     } catch (err) {
       console.error("Login Error:", err.response?.data || err.message);
-      setError('Login failed. Check your username/password.');
+      // Show specific error if available
+      setError(err.response?.data?.detail || 'Login failed.');
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2 style={{ textAlign: 'center' }}>Welcome to BookShop</h2>
+    <div className="card" style={{ maxWidth: '400px', margin: '50px auto' }}>
+      <h2 style={{ textAlign: 'center' }}>Welcome Back</h2>
       {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        
+        {/* FIX 2: Input is now Email */}
         <input
-          type="text"
-          placeholder="Username"
-          value={credentials.username}
-          onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+          type="email"
+          placeholder="Email Address"
+          value={credentials.email}
+          onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
           required
-          style={{ padding: '10px' }}
         />
+        
         <input
           type="password"
           placeholder="Password"
           value={credentials.password}
           onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
           required
-          style={{ padding: '10px' }}
         />
-        <button type="submit" style={{ padding: '10px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}>
-          Login
-        </button>
+        <button type="submit">Login</button>
       </form>
 
-      <p style={{ marginTop: '20px', textAlign: 'center' }}>
+      <p style={{ textAlign: 'center', marginTop: '10px' }}>
         Don't have an account? <Link to="/register">Register here</Link>
       </p>
     </div>

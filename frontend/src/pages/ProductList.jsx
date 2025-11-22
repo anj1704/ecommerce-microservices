@@ -48,24 +48,24 @@ export default function ProductList() {
 
   const handleAddToCart = async (product) => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    const userId = localStorage.getItem('userId'); // <--- Get the ID
+
+    if (!token || !userId) {
       alert("Please login to add items to cart!");
       return;
     }
 
     try {
-      // Call Real API to add to cart
-      // Note: Backend expects { item_id, quantity, price }
-      await api.post(`/cart/USER_ID_HERE/add`, {
-        item_id: product.id,
-        quantity: 1,
-        price: product.price
+      // URL Matches Script: /cart/$USER_ID/add
+      await api.post(`/cart/${userId}/add`, {
+        item_id: product.id, // Script uses "item_id"
+        quantity: 1,         // Script uses "quantity"
+        price: product.price // Script uses "price"
       });
-      alert(`Added to cart: "${product.caption.substring(0, 20)}..."`);
+      alert(`Added to cart: "${product.caption?.substring(0, 20)}..."`);
     } catch (err) {
-      // For now, just alert success because we haven't implemented 
-      // dynamic User ID extraction yet.
-      alert(`Added to cart (Local): "${product.caption.substring(0, 20)}..."`);
+      console.error("Add to cart failed:", err);
+      alert("Failed to add item. Check console.");
     }
   };
 

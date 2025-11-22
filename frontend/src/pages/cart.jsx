@@ -1,49 +1,98 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api'; // Keep for later use
+import api from '../api';
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalPrice, setTotalPrice] = useState(0);
   const navigate = useNavigate();
 
-  // --- MOCK DATA (What the backend would send) ---
-  const MOCK_CART = [
-    { book_id: 1, title: 'Cloud Computing', author: 'Thomas Erl', price: 49.99, quantity: 1 },
-    { book_id: 4, title: 'Clean Code', author: 'Robert C. Martin', price: 42.00, quantity: 2 },
-  ];
-
   useEffect(() => {
-    const fetchCart = async () => {
+    const fetchData = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // ✅ REAL CODE
-        const response = await api.get('/cart');
-        // Ensure we handle cases where cart might be null
-        setCartItems(response.data.items || []); 
+        // 1. Fetch the user's Cart (Contains IDs only)
+        const cartRes = await api.get(`/cart/${userId}`);
+        const rawItems = cartRes.data.items || [];
+
+        // 2. Fetch the Product Catalog (To get Names)
+        let productMap = {};
+        try {
+          // Fetch enough items to cover the IDs
+          const productsRes = await api.get('/search?q=book&limit=100');
+          const productList = productsRes.data.results || [];
+          
+          // Create a "Dictionary" for fast lookup
+          productList.forEach(p => {
+            productMap[p.item_id] = p.description;
+          });
+        } catch (e) {
+          console.warn("Could not fetch catalog for name lookup");
+        }
+
+        // 3. Merge them: Cart Item + Real Name
+        const enrichedItems = rawItems.map(item => ({
+          ...item,
+          // LOOKUP: Use the ID to find the name in our map
+          caption: productMap[item.itemId] || item.description || `Item #${item.itemId}`,
+          // Ensure numbers are numbers
+          price: parseFloat(item.price),
+          quantity: parseInt(item.quantity)
+        }));
+
+        setCartItems(enrichedItems);
+
+        // Calculate Total
+        const total = enrichedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        setTotalPrice(total);
+
       } catch (err) {
         console.error("Error fetching cart:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchCart();
+
+    fetchData();
   }, []);
 
-  // Calculate Total Price
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const handleRemove = async (itemId) => {
+    const userId = localStorage.getItem('userId');
+    try {
+      // Optimistic Update (Remove from UI immediately)
+      const updatedItems = cartItems.filter(item => item.itemId !== itemId);
+      setCartItems(updatedItems);
+      
+      // Recalculate Total
+      const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      setTotalPrice(newTotal);
 
-  const handleRemove = (bookId) => {
-    // Filter out the item to simulate removal
-    setCartItems(cartItems.filter(item => item.book_id !== bookId));
+      // Call Backend to delete
+      await api.delete(`/cart/${userId}/remove/${itemId}`);
+      
+    } catch (err) {
+      console.error("Failed to remove item", err);
+      alert("Failed to remove item.");
+    }
   };
 
   const handlePlaceOrder = async () => {
-    if (cartItems.length === 0) return alert("Cart is empty!");
+    const userId = localStorage.getItem('userId');
     
+    if (cartItems.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+
     if (window.confirm(`Confirm purchase for $${totalPrice.toFixed(2)}?`)) {
       try {
-        // ✅ REAL CODE: Trigger the Order Service
-        await api.post('/orders'); 
+        await api.post(`/orders/${userId}/place`);
         
         alert("Order placed successfully!");
         setCartItems([]); 
@@ -51,80 +100,80 @@ export default function Cart() {
 
       } catch (err) {
         console.error("Order failed:", err);
-        alert("Failed to place order. Check console.");
+        alert("Failed to place order.");
       }
     }
   };
 
-  if (loading) return <p>Loading cart...</p>;
+  if (loading) return <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading cart...</p>;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2>Your Shopping Cart</h2>
+    <div className="container" style={{ maxWidth: '800px' }}>
+      <h2 style={{ marginBottom: '20px' }}>Your Shopping Cart</h2>
 
       {cartItems.length === 0 ? (
-        <p>Your cart is empty. <a href="/">Go shopping!</a></p>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+          <p style={{ fontSize: '18px' }}>Your cart is empty.</p>
+          <button onClick={() => navigate('/')} style={{ marginTop: '10px' }}>Go Shopping</button>
+        </div>
       ) : (
         <>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
-                <th style={{ padding: '10px' }}>Book</th>
-                <th style={{ padding: '10px' }}>Price</th>
-                <th style={{ padding: '10px' }}>Quantity</th>
-                <th style={{ padding: '10px' }}>Total</th>
-                <th style={{ padding: '10px' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cartItems.map(item => (
-                <tr key={item.book_id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '15px' }}>
-                    {/* UPDATED: Display Caption instead of Title/Author */}
-                    <div style={{ 
-                      maxWidth: '300px', 
-                      display: '-webkit-box',
-                      WebkitLineClamp: '2', // Limit to 2 lines
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      fontSize: '14px',
-                      color: '#334155',
-                      lineHeight: '1.4'
-                    }}>
-                      {item.caption || "Item description unavailable"}
-                    </div>
-                  </td>
-                  <td style={{ padding: '15px' }}>${item.price.toFixed(2)}</td>
-                  <td style={{ padding: '15px' }}>{item.quantity}</td>
-                  <td style={{ padding: '15px' }}>${(item.price * item.quantity).toFixed(2)}</td>
-                  <td style={{ padding: '15px' }}>
-                    <button 
-                      onClick={() => handleRemove(item.book_id)}
-                      style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}
-                    >
-                      Remove
-                    </button>
-                  </td>
+          <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <tr style={{ textAlign: 'left' }}>
+                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Book</th>
+                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Price</th>
+                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Qty</th>
+                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}>Total</th>
+                  <th style={{ padding: '15px', color: '#64748b', fontWeight: '600' }}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {cartItems.map(item => (
+                  <tr key={item.itemId} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '15px' }}>
+                      <div style={{ 
+                        maxWidth: '280px', 
+                        fontSize: '14px', 
+                        color: '#334155',
+                        display: '-webkit-box',
+                        WebkitLineClamp: '2',
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {/* THIS IS THE FIX: Display the resolved caption */}
+                        {item.caption}
+                      </div>
+                    </td>
+                    <td style={{ padding: '15px', color: '#475569' }}>${item.price.toFixed(2)}</td>
+                    <td style={{ padding: '15px', color: '#475569' }}>{item.quantity}</td>
+                    <td style={{ padding: '15px', fontWeight: 'bold', color: '#0f172a' }}>
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </td>
+                    <td style={{ padding: '15px' }}>
+                      <button 
+                        onClick={() => handleRemove(item.itemId)}
+                        style={{ color: '#ef4444', background: 'none', padding: '0', fontSize: '13px', textDecoration: 'underline' }}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div style={{ marginTop: '30px', textAlign: 'right' }}>
-            <h3>Total: ${totalPrice.toFixed(2)}</h3>
+          <div style={{ marginTop: '30px', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a', marginBottom: '15px' }}>
+              Total: ${totalPrice.toFixed(2)}
+            </div>
             <button 
               onClick={handlePlaceOrder}
-              style={{ 
-                padding: '15px 30px', 
-                fontSize: '16px', 
-                background: '#28a745', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '5px', 
-                cursor: 'pointer' 
-              }}
+              style={{ padding: '12px 30px', fontSize: '16px' }}
             >
-              Place Order
+              Checkout
             </button>
           </div>
         </>

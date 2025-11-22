@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'; // Added Link import
 import api from '../api';
 
 export default function Register() {
-  const [formData, setFormData] = useState({ username: '', password: '', email: '' });
+  const [formData, setFormData] = useState({ name: '', password: '', email: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -11,7 +11,7 @@ export default function Register() {
     e.preventDefault();
     try {
       // ✅ REAL BACKEND CODE (Active)
-      await api.post('/register', formData);
+      await api.post('/auth/register', formData);
       
       alert('Registration successful! Please login.');
       navigate('/login');

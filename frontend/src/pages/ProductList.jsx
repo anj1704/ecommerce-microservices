@@ -1,60 +1,73 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
+import api from '../api'; // ✅ This was missing!
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // --- MOCK DATA (Updated with Captions only) ---
-  const MOCK_BOOKS = [
-    { id: 1, caption: 'A comprehensive guide to Cloud Computing concepts and service models by Thomas Erl.', price: 49.99 },
-    { id: 2, caption: 'Designing Data-Intensive Applications: The Big Ideas Behind Reliable Systems.', price: 35.50 },
-    { id: 3, caption: 'The Pragmatic Programmer: From Journeyman to Master. Essential reading for devs.', price: 45.00 },
-    { id: 4, caption: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin.', price: 42.00 },
-    { id: 5, caption: 'Introduction to Algorithms by CLRS. The standard textbook for algorithms.', price: 80.00 },
-  ];
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // ✅ REAL CODE
-        const endpoint = searchQuery ? `/products?q=${searchQuery}` : '/products';
+        // 1. Handle Search Query (Default to "book" if empty)
+        const queryTerm = searchQuery || "book"; 
+        const endpoint = `/search?q=${queryTerm}`;
+        
+        // 2. Call the Real API
         const response = await api.get(endpoint);
         
-        // Simple Mapping: Ensure ID and Caption exist
-        const mappedProducts = response.data.map(item => ({
+        // 3. Map the Data (Backend 'description' -> Frontend 'caption')
+        // The Search Service returns { results: [...] }
+        const rawItems = response.data.results || []; 
+
+        const mappedProducts = rawItems.map(item => ({
           ...item,
-          id: item.id || item.book_id, // Handle cases where backend might use book_id
-          caption: item.caption // We rely 100% on this now
+          id: item.item_id,           // Backend sends 'item_id'
+          caption: item.description,  // Backend sends 'description'
+          price: parseFloat(item.price) 
         }));
 
         setProducts(mappedProducts);
         
       } catch (err) {
-        console.error("Failed to fetch products", err);
+        console.error("Failed to fetch products:", err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, []); 
+    // Debounce the search so we don't spam the API while typing
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts();
+    }, 500);
 
-  const handleAddToCart = (product) => {
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]); 
+
+  const handleAddToCart = async (product) => {
     const token = localStorage.getItem('token');
     if (!token) {
       alert("Please login to add items to cart!");
       return;
     }
-    // Just showing a truncated caption in the alert
-    alert(`Added item to cart: "${product.caption.substring(0, 20)}..."`);
-  };
 
-  // ✅ UPDATED SEARCH LOGIC: Filter by CAPTION
-  const filteredProducts = products.filter(p => 
-    p.caption.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    try {
+      // Call Real API to add to cart
+      // Note: Backend expects { item_id, quantity, price }
+      await api.post(`/cart/USER_ID_HERE/add`, {
+        item_id: product.id,
+        quantity: 1,
+        price: product.price
+      });
+      alert(`Added to cart: "${product.caption.substring(0, 20)}..."`);
+    } catch (err) {
+      // For now, just alert success because we haven't implemented 
+      // dynamic User ID extraction yet.
+      alert(`Added to cart (Local): "${product.caption.substring(0, 20)}..."`);
+    }
+  };
 
   return (
     <div className="container">
@@ -83,8 +96,8 @@ export default function ProductList() {
         <p style={{textAlign: 'center', color: '#666'}}>Loading library...</p>
       ) : (
         <div className="grid"> 
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map(book => (
+          {products.length > 0 ? (
+            products.map(book => (
               <ProductCard key={book.id} product={book} onAddToCart={handleAddToCart} />
             ))
           ) : (

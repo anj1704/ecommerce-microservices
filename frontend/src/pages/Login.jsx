@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 
 export default function Login() {
-  // FIX 1: Change 'username' to 'email' to match Backend requirement
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -49,7 +48,6 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         
-        {/* FIX 2: Input is now Email */}
         <input
           type="email"
           placeholder="Email Address"

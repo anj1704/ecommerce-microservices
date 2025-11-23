@@ -138,7 +138,6 @@ export default function Cart() {
                 }}
               >
                 <tr style={{ textAlign: "left" }}>
-                  {/* Changed "Book" to "Item" */}
                   <th
                     style={{
                       padding: "15px",
@@ -202,7 +201,6 @@ export default function Cart() {
                           overflow: "hidden",
                         }}
                       >
-                        {/* THIS IS THE FIX: Display the resolved caption */}
                         {item.caption}
                       </div>
                     </td>

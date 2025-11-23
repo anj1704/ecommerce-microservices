@@ -11,8 +11,6 @@ export default function ProductList() {
     const fetchProducts = async () => {
       try {
         // 1. Determine Search Term
-        // Since it's a General Store, we default to "item" to get a broad list
-        // if the search bar is empty.
         const queryTerm = searchQuery || "item"; 
         const endpoint = `/search?q=${queryTerm}&limit=100`;
         
@@ -20,7 +18,6 @@ export default function ProductList() {
         const response = await api.get(endpoint);
         
         // 3. Map Data: Backend (Search Service) -> Frontend (UI)
-        // The Search Service returns { results: [...] }
         const rawItems = response.data.results || []; 
 
         const mappedProducts = rawItems.map(item => ({
@@ -28,7 +25,6 @@ export default function ProductList() {
           id: item.item_id,
           caption: item.description,
           price: parseFloat(item.price),
-          // ✅ NEW: Map the backend image URL to the frontend object
           image: item.image_url 
         }));
 

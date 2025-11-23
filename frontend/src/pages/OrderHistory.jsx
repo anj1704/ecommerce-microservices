@@ -21,7 +21,6 @@ export default function OrderHistory() {
         try {
           const productsRes = await api.get("/search?q=item&limit=100");
           const productList = productsRes.data.results || [];
-          // Create a dictionary: { "1": "Cloud Computing...", "2": "Clean Code..." }
           productList.forEach((p) => {
             productMap[p.item_id] = p.description;
           });
@@ -33,7 +32,6 @@ export default function OrderHistory() {
         const safeOrders = rawOrders.map((order) => {
           let parsedItems = [];
 
-          // FIX A: Handle "items" being a JSON string or an Array
           if (typeof order.items === "string") {
             try {
               parsedItems = JSON.parse(order.items);
@@ -44,7 +42,6 @@ export default function OrderHistory() {
             parsedItems = order.items;
           }
 
-          // FIX B: Map IDs to Captions
           const enrichedItems = parsedItems.map((item) => ({
             ...item,
             // Use the map we built, or fallback to the ID
@@ -57,7 +54,6 @@ export default function OrderHistory() {
           return {
             ...order,
             items: enrichedItems,
-            // FIX C: Handle 'total_amount' vs 'total'
             total:
               order.total_amount !== undefined
                 ? parseFloat(order.total_amount)

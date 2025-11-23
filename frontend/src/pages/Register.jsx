@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Added Link import
+import { useNavigate, Link } from "react-router-dom";
 import api from "../api";
 
 export default function Register() {
@@ -14,7 +14,6 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ REAL BACKEND CODE (Active)
       await api.post("/auth/register", formData);
 
       alert("Registration successful! Please login.");
@@ -73,7 +72,6 @@ export default function Register() {
           required
           style={{ padding: "10px" }}
         />
-        {/* Changed button color to Blue to distinguish from Login */}
         <button
           type="submit"
           style={{

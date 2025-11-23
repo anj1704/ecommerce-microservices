@@ -66,25 +66,16 @@ button:active { transform: scale(0.98); }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 20px;
-  /* FIX: Ensure content doesn't spill out */
   overflow: hidden; 
   display: flex;
   flex-direction: column;
 }
 
-/* THE GRID FIX */
 .grid {
   display: grid;
-  /* 200px columns */
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  
-  /* Gaps */
   column-gap: 20px; 
-  row-gap: 65px; /* Increased vertical gap */
-  
-  /* Padding to prevent bottom cutoff */
+  row-gap: 65px;
   padding-bottom: 100px;
-  
-  /* Ensure rows stretch to match height */
   align-items: stretch; 
 }

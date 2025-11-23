@@ -22,7 +22,6 @@ const ProductCard = ({ product, onAddToCart }) => {
         backgroundColor: '#f8fafc'
       }}>
         {product.image ? (
-          // ✅ CASE A: Real Image exists
           <img 
             src={product.image} 
             alt={product.caption} 
@@ -35,7 +34,6 @@ const ProductCard = ({ product, onAddToCart }) => {
             onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerText = '📦'; }}
           />
         ) : (
-          // ✅ CASE B: No Image URL (Fallback to Box)
           <div style={{ color: '#94a3b8', fontSize: '40px' }}>📦</div>
         )}
       </div>

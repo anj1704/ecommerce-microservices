@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// 1. Create a centralized Axios instance
 // We point this to your API Gateway (Port 8080)
 const api = axios.create({
   baseURL: 'http://a7e2b445c41ad4dde9c639ec8b4c6a7e-4665936.us-east-1.elb.amazonaws.com:8080', // This routes to your FastAPI Gateway
@@ -9,7 +8,6 @@ const api = axios.create({
   },
 });
 
-// 2. Request Interceptor
 // Before any request is sent, this function runs.
 // It checks if we have a token and adds it to the headers.
 api.interceptors.request.use(
@@ -23,7 +21,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 3. Response Interceptor (Optional but recommended)
 // If the backend says "401 Unauthorized" (token expired),
 // we wipe the storage and redirect to login.
 api.interceptors.response.use(

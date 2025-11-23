@@ -9,7 +9,7 @@ export const errorRate = new Rate("errors");
 export const options = {
   stages: [
     { duration: "30s", target: 20 }, // Ramp up to 20 users
-    { duration: "1m", target: 50 }, // Spike to 50 users (Should trigger HPA)
+    { duration: "1m", target: 50 }, // Spike to 50 users
     { duration: "2m", target: 50 }, // Stay at 50 users
     { duration: "30s", target: 0 }, // Ramp down
   ],
@@ -64,7 +64,7 @@ export default function () {
     errorRate.add(1);
 
   const token = res.json("access_token");
-  const userId = res.json("user.user_id"); // Adjust if your backend structure differs
+  const userId = res.json("user.user_id");
 
   if (!token) {
     console.error("Failed to get token");
@@ -92,7 +92,7 @@ export default function () {
     let attempts = 0;
     const maxAttempts = 3; // Try 3 different words before giving up
 
-    // 🔁 RETRY LOOP: Keep searching until we find items or run out of tries
+    //Keep searching until we find items or run out of tries
     while (results.length === 0 && attempts < maxAttempts) {
       attempts++;
       // Pick a random term
@@ -111,14 +111,11 @@ export default function () {
       const body = searchRes.json();
       if (body && body.results && body.results.length > 0) {
         results = body.results;
-        // console.log(`Found items for "${randomTerm}" on attempt ${attempts}`);
       } else {
-        // console.log(`No items found for "${randomTerm}", retrying...`);
         sleep(0.5); // Wait a tiny bit before trying again
       }
     }
 
-    // Only proceed if we actually found something after all retries
     if (results.length > 0) {
       // Pick a random item from the successful results
       const item = results[Math.floor(Math.random() * results.length)];
@@ -150,8 +147,6 @@ export default function () {
       check(orderRes, { "Place Order status 200": (r) => r.status === 200 }) ||
         errorRate.add(1);
     } else {
-      // Optional: Log failure if 3 attempts all failed (Database might be empty)
-      // console.error("Failed to find any products after 3 attempts");
       errorRate.add(1);
     }
   });

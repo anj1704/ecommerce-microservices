@@ -15,6 +15,7 @@ from pyflink.common.typeinfo import Types
 from pyflink.datastream.functions import MapFunction, ProcessWindowFunction
 from pyflink.datastream.window import TumblingProcessingTimeWindows
 from pyflink.common.time import Time
+from pyflink.common.watermark_strategy import WatermarkStrategy
 import json
 from datetime import datetime
 import argparse
@@ -34,7 +35,7 @@ class OrderEventParser(MapFunction):
                 len(event.get("items", [])),
             )
         except Exception as e:
-            print(f"Error parsing event: {e}")
+            print("Error parsing event: {0}".format(e))
             return None
 
 
@@ -83,7 +84,9 @@ def create_kafka_source(bootstrap_servers, topic, username, password, group_id):
         "group.id": group_id,
         "security.protocol": "SASL_SSL",
         "sasl.mechanism": "SCRAM-SHA-512",
-        "sasl.jaas.config": f'org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";',
+        "sasl.jaas.config": 'org.apache.kafka.common.security.scram.ScramLoginModule required username="{0}" password="{1}";'.format(
+            username, password
+        ),
     }
 
     return (
@@ -104,7 +107,9 @@ def create_kafka_sink(bootstrap_servers, topic, username, password):
         "bootstrap.servers": bootstrap_servers,
         "security.protocol": "SASL_SSL",
         "sasl.mechanism": "SCRAM-SHA-512",
-        "sasl.jaas.config": f'org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";',
+        "sasl.jaas.config": 'org.apache.kafka.common.security.scram.ScramLoginModule required username="{0}" password="{1}";'.format(
+            username, password
+        ),
     }
 
     return (
@@ -120,7 +125,9 @@ def create_kafka_sink(bootstrap_servers, topic, username, password):
         .set_property("sasl.mechanism", "SCRAM-SHA-512")
         .set_property(
             "sasl.jaas.config",
-            f'org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";',
+            'org.apache.kafka.common.security.scram.ScramLoginModule required username="{0}" password="{1}";'.format(
+                username, password
+            ),
         )
         .build()
     )
@@ -140,7 +147,7 @@ def main():
     args, _ = parser.parse_known_args()
 
     print("Starting Flink Analytics Job")
-    print(f"Kafka Brokers: {args.bootstrap_servers}")
+    print("Kafka Brokers: {0}".format(args.bootstrap_servers))
 
     # Create execution environment
     env = StreamExecutionEnvironment.get_execution_environment()
@@ -162,7 +169,9 @@ def main():
 
     # Build processing pipeline
     stream = env.from_source(
-        kafka_source, watermark_strategy=None, source_name="Kafka Order Events"
+        kafka_source,
+        watermark_strategy=WatermarkStrategy.no_watermarks(),
+        source_name="Kafka Order Events",
     )
 
     # Parse events

@@ -3,30 +3,29 @@ set -e
 
 echo "Packaging Flink job..."
 
-# 1. Prepare dist directory
+# 1. Clean previous build
 rm -rf dist
+rm -f flink-job.zip
+
+# 2. Create dist directory
 mkdir -p dist
 
-# 2. Copy Python Source
+# 3. Copy Python Source
 cp analytics_job.py dist/
 
-# 3. Copy the EXISTING Kafka JAR to dist (so we can upload it later)
-# Make sure the filename matches exactly what you have in your folder
+# 4. Copy the Kafka JAR (Must exist in current folder)
 JAR_NAME="flink-sql-connector-kafka-1.15.0.jar"
-
 if [ -f "$JAR_NAME" ]; then
-    echo "Found local JAR: $JAR_NAME"
     cp "$JAR_NAME" dist/
 else
-    echo "ERROR: $JAR_NAME not found in current directory!"
-    exit 1
+    echo "WARNING: $JAR_NAME not found. Make sure you downloaded it!"
 fi
 
-# 4. Install Python dependencies
-pip3 install -r requirements.txt -t dist/
+# 5. Install dependencies (ONLY kafka-python)
+# We use --only-binary=:all: to prevent it from trying to compile C++ code
+pip3 install -r requirements.txt -t dist/ --only-binary=:all: || pip3 install -r requirements.txt -t dist/
 
-# 5. Zip the Python code (Excluding the JAR)
-# We exclude the JAR because we pass it separately to Dataproc
+# 6. Zip it up (Excluding the heavy JAR)
 cd dist
 zip -r ../flink-job.zip . -x "*.jar"
 cd ..

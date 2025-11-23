@@ -10,7 +10,6 @@ import json
 from config import settings
 from database import get_db_connection
 from models import AddToCart, CartItem, OrderResponse
-from kafka_producer import producer
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -41,8 +40,23 @@ carts_table = dynamodb.Table(settings.carts_table)
 @app.on_event("startup")
 async def startup():
     # init_db()
-    logger.info("🚀 Starting order service...")
-    logger.info("✅ Kafka topics initialized")
+    logger.info("tarting order service...")
+    # Initialize Kafka in background thread (non-blocking)
+
+    def init_kafka():
+        try:
+            from kafka_producer import producer
+
+            producer._initialize()
+        except Exception as e:
+            logger.error(f"Kafka initialization failed: {e}")
+
+    # Run in background
+    import threading
+
+    threading.Thread(target=init_kafka, daemon=True).start()
+
+    logger.info("Order service started (Kafka initializing in background)")
 
 
 @app.get("/health")
@@ -52,21 +66,22 @@ async def health_check():
 
 @app.get("/health/startup")
 async def startup_health():
-    """Startup probe - checks Kafka connectivity"""
-    try:
-        # Simple check - producer exists and is configured
-        if producer.producer is None:
-            raise Exception("Kafka producer not initialized")
-        return {"status": "healthy", "kafka": "connected"}
-    except Exception as e:
-        logger.error(f"Startup health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
+    """Startup probe - just check if FastAPI is running"""
+    return {"status": "healthy", "message": "Service started"}
 
 
 @app.get("/health/ready")
 async def readiness_health():
-    """Readiness probe - service ready to accept traffic"""
-    return {"status": "ready"}
+    """Readiness probe - check if Kafka is ready"""
+    try:
+        from kafka_producer import producer
+
+        if producer._initialized and producer.producer is not None:
+            return {"status": "ready", "kafka": "connected"}
+        else:
+            raise HTTPException(status_code=503, detail="Kafka not ready yet")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
 
 
 @app.get("/health/live")
@@ -140,6 +155,8 @@ async def remove_from_cart(user_id: str, item_id: str):
 
 @app.post("/orders/{user_id}/place", response_model=OrderResponse)
 async def place_order(user_id: str):
+    from kafka_producer import producer
+
     # Get cart
     response = carts_table.get_item(Key={"userId": user_id})
 

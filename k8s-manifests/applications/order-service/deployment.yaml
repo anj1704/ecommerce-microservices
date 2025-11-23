@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-order-service:v1.0.3
+          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-order-service:v1.0.4
           imagePullPolicy: Always
           ports:
             - containerPort: 8082
@@ -79,17 +79,20 @@ spec:
             httpGet:
               path: /health/startup
               port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            failureThreshold: 30 # 30 * 5s = 2.5 min timeout
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 20
+            timeoutSeconds: 2
 
           # Readiness probe
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 2
 
           # Liveness probe
           livenessProbe:
@@ -98,3 +101,5 @@ spec:
               port: 8000
             initialDelaySeconds: 30
             periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 2

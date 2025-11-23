@@ -180,3 +180,52 @@ resource "aws_iam_role_policy" "eks_nodes_permissions" {
     ]
   })
 }
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_msk_cluster_policy" "admin" {
+  cluster_arn = aws_msk_cluster.main.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ClusterAdmin"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "kafka-cluster:Connect",
+          "kafka-cluster:AlterCluster",
+          "kafka-cluster:DescribeCluster"
+        ]
+        Resource = aws_msk_cluster.main.arn
+      },
+      {
+        Sid    = "TopicAdmin"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "kafka-cluster:*Topic*",
+          "kafka-cluster:WriteData",
+          "kafka-cluster:ReadData"
+        ]
+        Resource = aws_msk_cluster.main.arn
+      },
+      {
+        Sid    = "GroupAdmin"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "kafka-cluster:*Group*"
+        ]
+        Resource = aws_msk_cluster.main.arn
+      }
+    ]
+  })
+}

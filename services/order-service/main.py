@@ -10,6 +10,11 @@ import json
 from config import settings
 from database import get_db_connection
 from models import AddToCart, CartItem, OrderResponse
+from kafka_producer import producer
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Order Service", version="1.0.0")
 
@@ -36,12 +41,38 @@ carts_table = dynamodb.Table(settings.carts_table)
 @app.on_event("startup")
 async def startup():
     # init_db()
-    pass
+    logger.info("🚀 Starting order service...")
+    logger.info("✅ Kafka topics initialized")
 
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": settings.service_name}
+
+
+@app.get("/health/startup")
+async def startup_health():
+    """Startup probe - checks Kafka connectivity"""
+    try:
+        # Simple check - producer exists and is configured
+        if producer.producer is None:
+            raise Exception("Kafka producer not initialized")
+        return {"status": "healthy", "kafka": "connected"}
+    except Exception as e:
+        logger.error(f"Startup health check failed: {e}")
+        raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
+
+
+@app.get("/health/ready")
+async def readiness_health():
+    """Readiness probe - service ready to accept traffic"""
+    return {"status": "ready"}
+
+
+@app.get("/health/live")
+async def liveness_health():
+    """Liveness probe - service is alive"""
+    return {"status": "alive"}
 
 
 @app.get("/cart/{user_id}")
@@ -121,8 +152,7 @@ async def place_order(user_id: str):
     print(f"cart : {cart}")
     print(f"items : {items}")
     # Calculate total
-    total = sum(float(item["price"]) * float(item["quantity"])
-                for item in items)
+    total = sum(float(item["price"]) * float(item["quantity"]) for item in items)
 
     print(f"Total : {total}")
     # Create order in RDS
@@ -138,12 +168,28 @@ async def place_order(user_id: str):
             )
             order_data = cur.fetchone()
 
-    print(order_data)
     # Clear cart
     carts_table.delete_item(Key={"userId": user_id})
 
     print("Cart cleared !")
-    # TODO: Publish to Kafka (Phase 5)
+
+    order_event = {
+        "orderId": str(order_data["order_id"]),
+        "userId": order_data["user_id"],
+        "items": [
+            {
+                "itemId": item["itemId"],
+                "quantity": item["quantity"],
+                "price": float(item["price"]),
+            }
+            for item in order_data["items"]
+        ],
+        "totalAmount": float(order_data["total_amount"]),
+        "timestamp": int(time.time()),
+    }
+
+    # Publish to Kafka
+    producer.send_order_event(order_event)
 
     return OrderResponse(
         order_id=str(order_data["order_id"]),

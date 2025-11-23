@@ -28,6 +28,7 @@ locals {
   vpc_id   = data.aws_vpc.default.id
   public_subnet_id  = tolist(data.aws_subnets.default.ids)[0] 
   private_subnet_id = tolist(data.aws_subnets.default.ids)[1]
+  msk_subnet_id     = tolist(data.aws_subnets.default.ids)[2]
 }
 
 # Elastic IP for the NAT Gateway (Static Public IP)

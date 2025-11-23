@@ -17,6 +17,10 @@ output "private_subnet_id" {
   value = local.private_subnet_id
 }
 
+output "msk_subnet_id" {
+  value = local.msk_subnet_id
+}
+
 # Database outputs (from module)
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint"
@@ -94,4 +98,19 @@ output "frontend_bucket_name" {
 output "frontend_website_url" {
   description = "S3 website endpoint"
   value       = aws_s3_bucket_website_configuration.frontend.website_endpoint
+}
+
+output "msk_bootstrap_brokers_sasl_scram" {
+  description = "MSK bootstrap brokers for SASL/SCRAM (public access)"
+  value       = aws_msk_cluster.main.bootstrap_brokers_sasl_scram
+}
+
+output "msk_bootstrap_brokers_plaintext" {
+  description = "MSK bootstrap brokers plaintext (internal)"
+  value       = aws_msk_cluster.main.bootstrap_brokers
+}
+
+output "kafka_secret_arn" {
+  description = "Kafka credentials secret ARN"
+  value       = aws_secretsmanager_secret.kafka_credentials.arn
 }

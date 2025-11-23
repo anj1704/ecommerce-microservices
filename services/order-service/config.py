@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     carts_table: str = Field(..., alias="CARTS_TABLE")
     sessions_table: str = Field(..., alias="SESSIONS_TABLE")
 
+    # Kafka
+    kafka_bootstrap_servers: str = Field(..., alias="KAFKA_BOOTSTRAP_SERVERS")
+    kafka_username: str = Field(..., alias="KAFKA_USERNAME")
+    kafka_password: str = Field(..., alias="KAFKA_PASSWORD")
+    kafka_topic: str = Field("order-events", alias="KAFKA_TOPIC")
+
     # Service
     service_name: str = Field("order-service", alias="SERVICE_NAME")
 

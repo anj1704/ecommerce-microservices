@@ -6,11 +6,15 @@ resource "google_dataproc_cluster" "flink" {
   cluster_config {
     staging_bucket = google_storage_bucket.dataproc_staging.name
 
+    gce_cluster_config {
+      zone = var.gcp_zone  
+    }
+
     master_config {
       num_instances = 1
       machine_type  = "n1-standard-2"
       disk_config {
-        boot_disk_size_gb = 50
+        boot_disk_size_gb = 30
       }
     }
 
@@ -18,7 +22,7 @@ resource "google_dataproc_cluster" "flink" {
       num_instances = 2
       machine_type  = "n1-standard-2"
       disk_config {
-        boot_disk_size_gb = 50
+        boot_disk_size_gb = 30
       }
     }
 

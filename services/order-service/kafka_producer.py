@@ -1,6 +1,4 @@
 from kafka import KafkaProducer
-from kafka.admin import KafkaAdminClient, NewTopic
-from kafka.errors import TopicAlreadyExistsError
 import json
 from config import settings
 import logging
@@ -27,9 +25,6 @@ class OrderEventProducer:
             try:
                 logger.info("nitializing Kafka producer...")
 
-                # Create topics first (with timeout)
-                self._ensure_topics_exist()
-
                 # Create producer
                 self.producer = KafkaProducer(
                     bootstrap_servers=settings.kafka_bootstrap_servers.split(","),
@@ -52,44 +47,6 @@ class OrderEventProducer:
                 logger.error(f"Failed to initialize Kafka producer: {e}")
                 # Don't raise - allow service to start without Kafka
                 self._initialized = False
-
-    def _ensure_topics_exist(self):
-        """Create Kafka topics if they don't exist"""
-        try:
-            admin_client = KafkaAdminClient(
-                bootstrap_servers=settings.kafka_bootstrap_servers.split(","),
-                security_protocol="SASL_SSL",
-                sasl_mechanism="SCRAM-SHA-512",
-                sasl_plain_username=settings.kafka_username,
-                sasl_plain_password=settings.kafka_password,
-                request_timeout_ms=10000,  # 10 second timeout
-                api_version=(2, 5, 0),
-            )
-
-            topics = [
-                NewTopic(
-                    name=settings.kafka_topic, num_partitions=3, replication_factor=2
-                ),
-                NewTopic(
-                    name="analytics-results", num_partitions=3, replication_factor=2
-                ),
-            ]
-
-            for topic in topics:
-                try:
-                    admin_client.create_topics(
-                        [topic], validate_only=False, timeout_ms=10000
-                    )
-                    logger.info(f"Created topic: {topic.name}")
-                except TopicAlreadyExistsError:
-                    logger.info(f"ℹ️  Topic already exists: {topic.name}")
-                except Exception as e:
-                    logger.warning(f"Could not create topic {topic.name}: {e}")
-
-            admin_client.close()
-
-        except Exception as e:
-            logger.warning(f"Topic creation failed (topics may already exist): {e}")
 
     def send_order_event(self, order_data):
         """Send order event to Kafka"""

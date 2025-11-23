@@ -61,8 +61,8 @@ export default function () {
     { headers: { "Content-Type": "application/json" } },
   );
 
-  check(res, { "Login successful": (r) => r.status === 200 }) ||
-    errorRate.add(1);
+  const success = check(res, { "Login successful": (r) => r.status === 200 });
+  errorRate.add(!success);
 
   const token = res.json("access_token");
   const userId = res.json("user.user_id");

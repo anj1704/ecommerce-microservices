@@ -21,7 +21,7 @@ export const options = {
 };
 
 const BASE_URL =
-  "http://a7e2b445c41ad4dde9c639ec8b4c6a7e-4665936.us-east-1.elb.amazonaws.com";
+  "http://a7e2b445c41ad4dde9c639ec8b4c6a7e-4665936.us-east-1.elb.amazonaws.com:8080";
 
 // Helper to generate random string for unique users
 function randomString(length) {

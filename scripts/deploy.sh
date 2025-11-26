@@ -17,18 +17,12 @@ cd k8s-manifests
 echo "--- Pre-loading Secrets ---"
 kubectl apply -f applications/user-service/secret.yaml
 
-echo "Initializing database..."
-kubectl delete job init-database --ignore-not-found
-kubectl apply -f jobs/init-db-job.yaml
-echo "Waiting for DB Job to complete..."
-kubectl wait --for=condition=complete --timeout=120s job/init-database
-
-echo "Initializing vector store..."
-kubectl delete job init-opensearch --ignore-not-found
-kubectl apply -f jobs/init-opensearch-job.yaml
-echo "Waiting for Opensearch Job to complete..."
-kubectl wait --for=condition=complete --timeout=120s job/init-opensearch
-
+# echo "Initializing database..."
+# kubectl delete job init-database --ignore-not-found
+# kubectl apply -f jobs/init-db-job.yaml
+# echo "Waiting for DB Job to complete..."
+# kubectl wait --for=condition=complete --timeout=120s job/init-database
+#
 echo "Deploying services..."
 kubectl apply -f applications/user-service/
 kubectl apply -f applications/order-service/
@@ -41,9 +35,21 @@ kubectl wait --for=condition=available --timeout=300s deployment/order-service
 kubectl wait --for=condition=available --timeout=300s deployment/search-service
 kubectl wait --for=condition=available --timeout=300s deployment/api-gateway
 
+echo "Initializing vector store..."
+kubectl delete job init-opensearch --ignore-not-found
+kubectl apply -f jobs/init-opensearch-job.yaml
+echo "Waiting for Opensearch Job to complete..."
+kubectl wait --for=condition=complete --timeout=120s job/init-opensearch
+
 echo "All services deployed!"
 kubectl get pods
 kubectl get services
 
 cd ..
 
+echo "Activating argoCD"
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl wait --for=condition=available --timeout=300s \
+  deployment/argocd-server -n argocd
+kubectl get pods -n argocd

@@ -10,7 +10,7 @@ export GCS_BUCKET="${GCP_PROJECT_ID}-flink-jobs"
 export MASTER_NODE="${DATAPROC_CLUSTER}-m"
 
 # Kafka configuration
-export KAFKA_BOOTSTRAP_SERVERS="b-1.ecommercemskafkadev.cbshpg.c2.kafka.us-east-1.amazonaws.com:9196,b-2.ecommercemskafkadev.cbshpg.c2.kafka.us-east-1.amazonaws.com:9196"
+export KAFKA_BOOTSTRAP_SERVERS="b-1.ecommercemskafkadev.xoty62.c2.kafka.us-east-1.amazonaws.com:9096,b-2.ecommercemskafkadev.xoty62.c2.kafka.us-east-1.amazonaws.com:9096"
 export KAFKA_USERNAME="kafka-admin"
 export KAFKA_PASSWORD="KafkaPassword123!"
 

@@ -206,7 +206,10 @@ async def place_order(user_id: str):
     }
 
     # Publish to Kafka
-    producer.send_order_event(order_event)
+    try:
+        producer.send_order_event(order_event)
+    except Exception:
+        logging.error(msg="Failed to send kafka producer event.")
 
     return OrderResponse(
         order_id=str(order_data["order_id"]),

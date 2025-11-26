@@ -1,10 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
 // We point this to your API Gateway (Port 8080)
 const api = axios.create({
-  baseURL: 'http://a7e2b445c41ad4dde9c639ec8b4c6a7e-4665936.us-east-1.elb.amazonaws.com:8080', // This routes to your FastAPI Gateway
+  baseURL:
+    "http://a237a8048d36d4d18a6387a3813452cc-365925734.us-east-1.elb.amazonaws.com:8080", // This routes to your FastAPI Gateway
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -12,13 +13,13 @@ const api = axios.create({
 // It checks if we have a token and adds it to the headers.
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // If the backend says "401 Unauthorized" (token expired),
@@ -27,11 +28,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
+

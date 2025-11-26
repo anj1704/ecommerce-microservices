@@ -10,9 +10,9 @@ aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin $ECR_REGISTRY
 
 # Create ECR repositories
-# for service in user-service order-service search-service api-gateway; do
-#   aws ecr create-repository --repository-name ecommerce-ms-${service} --region us-east-1 || true
-# done
+for service in user-service order-service search-service api-gateway; do
+  aws ecr create-repository --repository-name ecommerce-ms-${service} --region us-east-1 || true
+done
 
 # Build and push each service
 cd services

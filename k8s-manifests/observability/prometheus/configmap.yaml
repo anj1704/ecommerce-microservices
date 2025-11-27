@@ -42,9 +42,6 @@ data:
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
-          - source_labels: [__meta_kubernetes_node_address_InternalIP]
-            target_label: __address__
-            replacement: $1:10250
 
       # Scrape Kubernetes pods
       - job_name: 'kubernetes-pods'

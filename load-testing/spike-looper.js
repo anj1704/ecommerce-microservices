@@ -9,7 +9,8 @@ export const errorRate = new Rate("errors");
 export const options = {
   stages: [
     { duration: "1m", target: 10 }, // Ramp up to 10 users
-    { duration: "2m", target: 20 }, // Increase load to 20 users (Heavy CPU)
+    { duration: "2m", target: 40 }, // Increase load to 20 users (Heavy CPU)
+    { duration: "3m", target: 40 }, // Increase load to 20 users (Heavy CPU)
     { duration: "1m", target: 0 }, // Ramp down
   ],
   thresholds: {
@@ -76,7 +77,7 @@ export default function () {
     ];
 
     // Perform multiple searches per user to generate consistent load
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 50; i++) {
       const randomTerm =
         searchTerms[Math.floor(Math.random() * searchTerms.length)];
       const searchRes = http.get(
@@ -90,4 +91,3 @@ export default function () {
 
   sleep(1);
 }
-

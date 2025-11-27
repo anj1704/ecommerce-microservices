@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-order-service:v1.0.3
+          image: 034333502865.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ms-order-service:v1.0.4
           imagePullPolicy: Always
           ports:
             - containerPort: 8082
@@ -28,26 +28,6 @@ spec:
                 secretKeyRef:
                   name: order-service-secret
                   key: DATABASE_URL
-            - name: KAFKA_BOOTSTRAP_SERVERS
-              valueFrom:
-                secretKeyRef:
-                  name: order-service-secret
-                  key: KAFKA_BOOTSTRAP_SERVERS
-            - name: KAFKA_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: order-service-secret
-                  key: KAFKA_USERNAME
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: order-service-secret
-                  key: KAFKA_PASSWORD
-            - name: KAFKA_TOPIC
-              valueFrom:
-                configMapKeyRef:
-                  name: order-service-config
-                  key: KAFKA_TOPIC
             - name: SERVICE_NAME
               valueFrom:
                 configMapKeyRef:
@@ -68,6 +48,18 @@ spec:
                 configMapKeyRef:
                   name: order-service-config
                   key: SESSIONS_TABLE
+            - name: GCP_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: order-service-config
+                  key: GCP_PROJECT_ID
+            - name: PUBSUB_ORDER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: order-service-config
+                  key: PUBSUB_ORDER_TOPIC
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/key.json
           resources:
             requests:
               memory: "256Mi"
@@ -103,3 +95,14 @@ spec:
             periodSeconds: 30
             failureThreshold: 3
             timeoutSeconds: 2
+          volumeMounts:
+            - name: gcp-credentials
+              mountPath: /var/secrets/google
+              readOnly: true
+      volumes:
+        - name: gcp-credentials
+          secret:
+            secretName: order-service-secret
+            items:
+              - key: GCP_SERVICE_ACCOUNT_KEY
+                path: key.json

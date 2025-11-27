@@ -14,8 +14,10 @@ variable "gcp_zone" {
 
 variable "project_name" {
   type = string
+  default = "ecommerce"
 }
 
 variable "environment" {
   type = string
+  default = "dev"
 }

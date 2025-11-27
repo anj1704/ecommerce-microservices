@@ -8,4 +8,5 @@ data:
   AWS_REGION: "us-east-1"
   CARTS_TABLE: "ecommerce-ms-shopping-carts-dev"
   SESSIONS_TABLE: "ecommerce-ms-user-sessions-dev"
-  KAFKA_TOPIC: "order-events"
+  GCP_PROJECT_ID: "cloud-computing-479420"
+  PUBSUB_ORDER_TOPIC: "order-events"

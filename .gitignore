@@ -40,3 +40,4 @@ secrets/
 
 # Docker
 docker-compose.override.yml
+gcp-sa-key.json

@@ -79,6 +79,18 @@ async def add_to_cart(
         return response.json()
 
 
+@app.delete("/cart/{user_id}/remove/{item_id}")
+async def delete_from_cart(
+    user_id: str, item_id: str, authorization: Optional[str] = Header(None)
+):
+    verify_token(authorization)
+    async with httpx.AsyncClient() as client:
+        response = await client.delete(
+            f"{SERVICES['order']}/cart/{user_id}/remove/{item_id}"
+        )
+        return response.json()
+
+
 @app.post("/orders/{user_id}/place")
 async def place_order(user_id: str, authorization: Optional[str] = Header(None)):
     verify_token(authorization)
@@ -97,7 +109,8 @@ async def get_orders(user_id: str, authorization: Optional[str] = Header(None)):
 
 def verify_token(authorization: Optional[str]):
     if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header required")
+        raise HTTPException(
+            status_code=401, detail="Authorization header required")
 
     try:
         token = authorization.replace("Bearer ", "")

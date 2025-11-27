@@ -10,19 +10,16 @@ class Settings(BaseSettings):
     # AWS
     aws_region: str = Field("us-east-1", alias="AWS_REGION")
     aws_access_key_id: str | None = Field(None, alias="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key: str | None = Field(
-        None, alias="AWS_SECRET_ACCESS_KEY")
+    aws_secret_access_key: str | None = Field(None, alias="AWS_SECRET_ACCESS_KEY")
 
     # DynamoDB
     dynamodb_endpoint: str | None = Field(None, alias="DYNAMODB_ENDPOINT")
     carts_table: str = Field(..., alias="CARTS_TABLE")
     sessions_table: str = Field(..., alias="SESSIONS_TABLE")
 
-    # Kafka
-    kafka_bootstrap_servers: str = Field(..., alias="KAFKA_BOOTSTRAP_SERVERS")
-    kafka_username: str = Field(..., alias="KAFKA_USERNAME")
-    kafka_password: str = Field(..., alias="KAFKA_PASSWORD")
-    kafka_topic: str = Field("order-events", alias="KAFKA_TOPIC")
+    # Pub-Sub
+    gcp_project_id: str = Field(..., alias="GCP_PROJECT_ID")
+    pubsub_order_topic: str = Field("order-events", alias="PUBSUB_ORDER_TOPIC")
 
     # Service
     service_name: str = Field("order-service", alias="SERVICE_NAME")

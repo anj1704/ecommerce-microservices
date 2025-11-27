@@ -40,23 +40,23 @@ carts_table = dynamodb.Table(settings.carts_table)
 @app.on_event("startup")
 async def startup():
     # init_db()
-    logger.info("tarting order service...")
-    # Initialize Kafka in background thread (non-blocking)
+    logger.info("Starting order service...")
+    # Initialize in background thread (non-blocking)
 
-    def init_kafka():
+    def init_pubsub():
         try:
-            from kafka_producer import producer
+            from pubsub_producer import producer
 
             producer._initialize()
         except Exception as e:
-            logger.error(f"Kafka initialization failed: {e}")
+            logger.error(f"Pub-Sub initialization failed: {e}")
 
     # Run in background
     import threading
 
-    threading.Thread(target=init_kafka, daemon=True).start()
+    threading.Thread(target=init_pubsub, daemon=True).start()
 
-    logger.info("Order service started (Kafka initializing in background)")
+    logger.info("Order service started (Pub-Sub initializing in background)")
 
 
 @app.get("/health")
@@ -74,12 +74,12 @@ async def startup_health():
 async def readiness_health():
     """Readiness probe - check if Kafka is ready"""
     try:
-        from kafka_producer import producer
+        from pubsub_producer import producer
 
-        if producer._initialized and producer.producer is not None:
-            return {"status": "ready", "kafka": "connected"}
+        if producer._initialized and producer.publisher is not None:
+            return {"status": "ready", "PubSub": "connected"}
         else:
-            raise HTTPException(status_code=503, detail="Kafka not ready yet")
+            raise HTTPException(status_code=503, detail="PubSub not ready yet")
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
 
@@ -155,7 +155,7 @@ async def remove_from_cart(user_id: str, item_id: str):
 
 @app.post("/orders/{user_id}/place", response_model=OrderResponse)
 async def place_order(user_id: str):
-    from kafka_producer import producer
+    from pubsub_producer import producer
 
     # Get cart
     response = carts_table.get_item(Key={"userId": user_id})
@@ -205,11 +205,11 @@ async def place_order(user_id: str):
         "timestamp": int(time.time()),
     }
 
-    # Publish to Kafka
+    # Publish
     try:
         producer.send_order_event(order_event)
     except Exception:
-        logging.error(msg="Failed to send kafka producer event.")
+        logging.error(msg="Failed to publish.")
 
     return OrderResponse(
         order_id=str(order_data["order_id"]),

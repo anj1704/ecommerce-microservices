@@ -9,7 +9,7 @@ from google.cloud import pubsub_v1
 from datetime import datetime
 
 # Configuration
-PROJECT_ID = os.getenv("GCP_PROJECT_ID", "your-gcp-project")
+PROJECT_ID = os.getenv("GCP_PROJECT_ID", "cloud-computing-479420")
 SUBSCRIPTION_ID = "analytics-results-local-sub"
 
 
@@ -52,12 +52,10 @@ def main():
 
     # Create subscriber client
     subscriber = pubsub_v1.SubscriberClient()
-    subscription_path = subscriber.subscription_path(
-        PROJECT_ID, SUBSCRIPTION_ID)
+    subscription_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
 
     # Start listening
-    streaming_pull_future = subscriber.subscribe(
-        subscription_path, callback=callback)
+    streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
 
     try:
         # Keep running

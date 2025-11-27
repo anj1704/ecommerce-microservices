@@ -95,6 +95,7 @@ spec:
             periodSeconds: 30
             failureThreshold: 3
             timeoutSeconds: 2
+
           volumeMounts:
             - name: gcp-credentials
               mountPath: /var/secrets/google
@@ -102,7 +103,4 @@ spec:
       volumes:
         - name: gcp-credentials
           secret:
-            secretName: order-service-secret
-            items:
-              - key: GCP_SERVICE_ACCOUNT_KEY
-                path: key.json
+            secretName: gcp-credentials
